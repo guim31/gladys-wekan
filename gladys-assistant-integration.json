@@ -1,177 +1,1009 @@
 {
   "manifest_version": 1,
   "type": "device",
-  "name": "Demo Devices Template",
+  "name": "Wekan",
   "description": {
-    "en": "Starter template showing sensors, a switch, a dimmable light and a smart plug.",
-    "fr": "Template de démarrage : capteurs, interrupteur, lampe variable et prise connectée."
+    "en": "Wekan kanban boards: cards due today, overdue and done, new cards, cards added from a scene.",
+    "fr": "Tableaux kanban Wekan : cartes du jour, en retard et terminées, nouvelles cartes, ajout par scène.",
+    "de": "Wekan-Kanban-Boards: heute fällige, überfällige und erledigte Karten, neue Karten, aus Szenen.",
+    "es": "Tableros kanban de Wekan: tarjetas de hoy, atrasadas y terminadas, nuevas, añadidas por escena."
   },
   "version": "1.0.0",
-  "docker_image": "ghcr.io/gladysassistant/integration-template-js:1.0.0",
+  "docker_image": "ghcr.io/guim31/gladys-wekan:1.0.0",
   "gladys_version": ">=5.1.0",
-  "cover_image": "https://raw.githubusercontent.com/GladysAssistant/integration-template-js/master/cover.png",
-  "categories": ["lighting", "security", "environment"],
-  "transports": ["local", "cloud"],
+  "cover_image": "https://raw.githubusercontent.com/guim31/gladys-wekan/main/cover.png",
+  "categories": ["services"],
+  "transports": ["local"],
   "config_schema": [
     {
       "key": "intro",
       "type": "section",
-      "label": { "en": "Getting started", "fr": "Pour commencer" },
+      "label": {
+        "en": "Your Wekan",
+        "fr": "Votre Wekan",
+        "de": "Dein Wekan",
+        "es": "Su Wekan"
+      },
       "description": {
-        "en": "The demo weather station reads real data from the free Open-Meteo API: pick the coordinates to observe. No account, no API key.",
-        "fr": "La station météo de démonstration lit de vraies données via l'API gratuite Open-Meteo : choisissez les coordonnées à observer. Pas de compte, pas de clé d'API."
+        "en": "A self-hosted Wekan with its REST API on (WITH_API=true, the default). Give the username and password of a Wekan user with a password account (not LDAP nor OAuth).",
+        "fr": "Un Wekan auto-hébergé avec son API REST active (WITH_API=true, par défaut). Donnez l'identifiant et le mot de passe d'un utilisateur de Wekan à compte par mot de passe (ni LDAP ni OAuth).",
+        "de": "Ein selbst gehostetes Wekan mit aktiver REST-API (WITH_API=true, Standard). Gib Benutzername und Passwort eines Wekan-Benutzers mit Passwortkonto an (weder LDAP noch OAuth).",
+        "es": "Un Wekan autoalojado con su API REST activa (WITH_API=true, por defecto). Indique el usuario y la contraseña de un usuario de Wekan con cuenta por contraseña (ni LDAP ni OAuth)."
       },
       "links": [
         {
-          "url": "https://open-meteo.com/en/docs",
-          "label": { "en": "Open-Meteo documentation", "fr": "Documentation Open-Meteo" }
+          "url": "https://github.com/wekan/wekan/wiki/REST-API",
+          "label": {
+            "en": "Wekan REST API",
+            "fr": "API REST de Wekan",
+            "de": "Wekan-REST-API",
+            "es": "API REST de Wekan"
+          }
         }
       ]
     },
     {
-      "key": "latitude",
-      "type": "number",
-      "label": { "en": "Latitude", "fr": "Latitude" },
-      "description": {
-        "en": "Latitude used for the demo weather sensor.",
-        "fr": "Latitude utilisée par le capteur météo de démonstration."
+      "key": "url",
+      "type": "string",
+      "label": {
+        "en": "Address",
+        "fr": "Adresse",
+        "de": "Adresse",
+        "es": "Dirección"
       },
-      "placeholder": { "en": "e.g. 48.8566", "fr": "ex. 48.8566" },
+      "description": {
+        "en": "Address of Wekan, as in the browser, with https:// for HTTPS and :port if not the default.",
+        "fr": "Adresse de Wekan, comme dans le navigateur, avec https:// pour le HTTPS et :port s'il n'est pas celui par défaut.",
+        "de": "Adresse von Wekan wie im Browser, mit https:// für HTTPS und :Port, falls nicht der Standard.",
+        "es": "Dirección de Wekan, como en el navegador, con https:// para HTTPS y :puerto si no es el predeterminado."
+      },
+      "placeholder": {
+        "en": "e.g. http://192.168.1.20:8080",
+        "fr": "ex. http://192.168.1.20:8080",
+        "de": "z. B. http://192.168.1.20:8080",
+        "es": "p. ej. http://192.168.1.20:8080"
+      },
       "required": true,
-      "default": 48.8566,
-      "min": -90,
-      "max": 90
+      "default": ""
     },
     {
-      "key": "longitude",
-      "type": "number",
-      "label": { "en": "Longitude", "fr": "Longitude" },
-      "description": {
-        "en": "Longitude used for the demo weather sensor.",
-        "fr": "Longitude utilisée par le capteur météo de démonstration."
+      "key": "username",
+      "type": "string",
+      "label": {
+        "en": "Username or e-mail",
+        "fr": "Identifiant ou e-mail",
+        "de": "Benutzername oder E-Mail",
+        "es": "Usuario o correo electrónico"
       },
-      "placeholder": { "en": "e.g. 2.3522", "fr": "ex. 2.3522" },
+      "description": {
+        "en": "A Wekan user who is a member of the boards to follow. Cards added from Gladys are created in their name.",
+        "fr": "Un utilisateur de Wekan membre des tableaux à suivre. Les cartes ajoutées depuis Gladys sont créées à son nom.",
+        "de": "Ein Wekan-Benutzer, der Mitglied der zu verfolgenden Boards ist. Aus Gladys hinzugefügte Karten werden in seinem Namen erstellt.",
+        "es": "Un usuario de Wekan miembro de los tableros que se siguen. Las tarjetas añadidas desde Gladys se crean a su nombre."
+      },
       "required": true,
-      "default": 2.3522,
-      "min": -180,
-      "max": 180
+      "default": ""
     },
     {
-      "key": "unit",
-      "type": "select",
-      "label": { "en": "Temperature unit", "fr": "Unité de température" },
+      "key": "password",
+      "type": "secret",
+      "label": {
+        "en": "Password",
+        "fr": "Mot de passe",
+        "de": "Passwort",
+        "es": "Contraseña"
+      },
+      "required": true
+    },
+    {
+      "key": "options",
+      "type": "section",
+      "label": {
+        "en": "Options",
+        "fr": "Options",
+        "de": "Optionen",
+        "es": "Opciones"
+      }
+    },
+    {
+      "key": "boards",
+      "type": "string",
+      "label": {
+        "en": "Followed boards",
+        "fr": "Tableaux suivis",
+        "de": "Verfolgte Boards",
+        "es": "Tableros seguidos"
+      },
+      "description": {
+        "en": "Names or ids separated by commas. Empty: every board of the user (20 at most). One device per followed board.",
+        "fr": "Noms ou identifiants séparés par des virgules. Vide : tous les tableaux de l'utilisateur (20 au plus). Un appareil par tableau suivi.",
+        "de": "Namen oder IDs durch Kommas getrennt. Leer: alle Boards des Benutzers (höchstens 20). Ein Gerät pro verfolgtem Board.",
+        "es": "Nombres o identificadores separados por comas. Vacío: todos los tableros del usuario (20 como máximo). Un dispositivo por tablero seguido."
+      },
+      "placeholder": {
+        "en": "e.g. Home, Shopping",
+        "fr": "ex. Maison, Courses",
+        "de": "z. B. Haushalt, Einkauf",
+        "es": "p. ej. Casa, Compras"
+      },
       "required": false,
-      "default": "celsius",
+      "default": ""
+    },
+    {
+      "key": "done_lists",
+      "type": "string",
+      "label": {
+        "en": "\"Done\" lists",
+        "fr": "Listes « terminé »",
+        "de": "„Erledigt“-Listen",
+        "es": "Listas «terminado»"
+      },
+      "description": {
+        "en": "Lists whose cards count as done, by name, separated by commas. A card with an end date is done too.",
+        "fr": "Listes dont les cartes comptent comme terminées, par nom, séparées par des virgules. Une carte avec une date de fin l'est aussi.",
+        "de": "Listen, deren Karten als erledigt zählen, nach Namen, durch Kommas getrennt. Eine Karte mit Enddatum ist auch erledigt.",
+        "es": "Listas cuyas tarjetas cuentan como terminadas, por nombre, separadas por comas. Una tarjeta con fecha de fin también lo está."
+      },
+      "required": false,
+      "default": "Done, Fait, Terminé, Erledigt, Hecho"
+    },
+    {
+      "key": "allow_self_signed",
+      "type": "boolean",
+      "label": {
+        "en": "Accept self-signed certificates",
+        "fr": "Accepter les certificats auto-signés",
+        "de": "Selbstsignierte Zertifikate akzeptieren",
+        "es": "Aceptar certificados autofirmados"
+      },
+      "description": {
+        "en": "For an https:// address whose certificate is self-signed. Tick only for your own server.",
+        "fr": "Pour une adresse en https:// dont le certificat est auto-signé. À cocher seulement pour votre propre serveur.",
+        "de": "Für eine https://-Adresse mit selbstsigniertem Zertifikat. Nur für deinen eigenen Server aktivieren.",
+        "es": "Para una dirección https:// con certificado autofirmado. Márquelo solo para su propio servidor."
+      },
+      "required": false,
+      "default": false
+    },
+    {
+      "key": "poll_interval",
+      "type": "select",
+      "label": {
+        "en": "Refresh interval",
+        "fr": "Intervalle de rafraîchissement",
+        "de": "Aktualisierungsintervall",
+        "es": "Intervalo de actualización"
+      },
+      "description": {
+        "en": "How often Wekan is read (two requests per board and one per swimlane). Due dates and midnight are always followed on time.",
+        "fr": "Fréquence de lecture de Wekan (deux requêtes par tableau et une par couloir). Les échéances et minuit sont toujours suivis à l'heure.",
+        "de": "Wie oft Wekan gelesen wird (zwei Anfragen pro Board und eine pro Swimlane). Fälligkeiten und Mitternacht werden immer pünktlich verfolgt.",
+        "es": "Frecuencia de lectura de Wekan (dos solicitudes por tablero y una por carril). Los vencimientos y la medianoche se siguen siempre a tiempo."
+      },
+      "required": false,
+      "default": "300",
       "options": [
-        { "value": "celsius", "label": { "en": "Celsius", "fr": "Celsius" } },
-        { "value": "fahrenheit", "label": { "en": "Fahrenheit", "fr": "Fahrenheit" } }
+        {
+          "value": "60",
+          "label": {
+            "en": "1 minute",
+            "fr": "1 minute",
+            "de": "1 Minute",
+            "es": "1 minuto"
+          }
+        },
+        {
+          "value": "120",
+          "label": {
+            "en": "2 minutes",
+            "fr": "2 minutes",
+            "de": "2 Minuten",
+            "es": "2 minutos"
+          }
+        },
+        {
+          "value": "300",
+          "label": {
+            "en": "5 minutes",
+            "fr": "5 minutes",
+            "de": "5 Minuten",
+            "es": "5 minutos"
+          }
+        },
+        {
+          "value": "600",
+          "label": {
+            "en": "10 minutes",
+            "fr": "10 minutes",
+            "de": "10 Minuten",
+            "es": "10 minutos"
+          }
+        }
       ]
     },
     {
-      "key": "poll_frequency",
-      "type": "number",
-      "label": { "en": "Refresh interval (s)", "fr": "Intervalle de rafraîchissement (s)" },
+      "key": "language",
+      "type": "select",
+      "label": {
+        "en": "Language of the feature names",
+        "fr": "Langue des noms de fonctionnalités",
+        "de": "Sprache der Funktionsnamen",
+        "es": "Idioma de los nombres de funciones"
+      },
       "description": {
-        "en": "How often sensors are polled, in seconds (one minute minimum).",
-        "fr": "Fréquence d'interrogation des capteurs, en secondes (une minute minimum)."
+        "en": "Names given to the features when a device is added, and texts sent to scenes.",
+        "fr": "Noms donnés aux fonctionnalités à l'ajout d'un appareil, et textes envoyés aux scènes.",
+        "de": "Namen der Funktionen beim Hinzufügen eines Geräts und an Szenen gesendete Texte.",
+        "es": "Nombres dados a las funciones al añadir un dispositivo y textos enviados a las escenas."
       },
       "required": false,
-      "default": 300,
-      "min": 60,
-      "max": 3600
+      "default": "fr",
+      "options": [
+        {
+          "value": "en",
+          "label": {
+            "en": "English",
+            "fr": "Anglais",
+            "de": "Englisch",
+            "es": "Inglés"
+          }
+        },
+        {
+          "value": "fr",
+          "label": {
+            "en": "French",
+            "fr": "Français",
+            "de": "Französisch",
+            "es": "Francés"
+          }
+        },
+        {
+          "value": "de",
+          "label": {
+            "en": "German",
+            "fr": "Allemand",
+            "de": "Deutsch",
+            "es": "Alemán"
+          }
+        },
+        {
+          "value": "es",
+          "label": {
+            "en": "Spanish",
+            "fr": "Espagnol",
+            "de": "Spanisch",
+            "es": "Español"
+          }
+        }
+      ]
     }
   ],
   "actions": [
     {
-      "key": "test_weather",
-      "label": { "en": "Test the weather provider", "fr": "Tester le fournisseur météo" },
+      "key": "test_connection",
+      "label": {
+        "en": "Test the connection",
+        "fr": "Tester la connexion",
+        "de": "Verbindung testen",
+        "es": "Probar la conexión"
+      },
+      "description": {
+        "en": "Reads Wekan now and reports what it finds.",
+        "fr": "Lit Wekan maintenant et indique ce qu'elle trouve.",
+        "de": "Liest Wekan jetzt und meldet, was gefunden wurde.",
+        "es": "Lee Wekan ahora e informa de lo que encuentra."
+      },
       "timeout_seconds": 30
-    },
-    {
-      "key": "identify",
-      "label": { "en": "Identify a device", "fr": "Identifier un appareil" },
-      "fields": [
-        {
-          "key": "device",
-          "type": "select",
-          "source": "devices",
-          "label": { "en": "Device", "fr": "Appareil" },
-          "required": true
-        }
-      ]
     }
   ],
   "scene_triggers": [
     {
-      "key": "motion_detected",
-      "label": { "en": "Motion detected", "fr": "Mouvement détecté" },
+      "key": "card_added",
+      "label": {
+        "en": "New Wekan card",
+        "fr": "Nouvelle carte Wekan",
+        "de": "Neue Wekan-Karte",
+        "es": "Nueva tarjeta de Wekan"
+      },
       "description": {
-        "en": "A demo motion sensor saw a person or an animal move.",
-        "fr": "Un détecteur de démonstration a vu bouger une personne ou un animal."
+        "en": "A card appeared on a followed board (created, restored or brought from another board).",
+        "fr": "Une carte est apparue sur un tableau suivi (créée, restaurée ou venue d'un autre tableau).",
+        "de": "Eine Karte ist auf einem verfolgten Board erschienen (erstellt, wiederhergestellt oder von einem anderen Board).",
+        "es": "Apareció una tarjeta en un tablero seguido (creada, restaurada o traída de otro tablero)."
       },
       "fields": [
         {
-          "key": "device",
+          "key": "board",
           "type": "select",
           "source": "devices",
-          "label": { "en": "Sensor", "fr": "Détecteur" }
+          "label": {
+            "en": "Board (empty: any)",
+            "fr": "Tableau (vide : tous)",
+            "de": "Board (leer: alle)",
+            "es": "Tablero (vacío: cualquiera)"
+          }
         },
         {
-          "key": "target",
-          "type": "multi_select",
-          "label": { "en": "What moved", "fr": "Ce qui a bougé" },
-          "options": [
-            { "value": "person", "label": { "en": "Person", "fr": "Personne" } },
-            { "value": "animal", "label": { "en": "Animal", "fr": "Animal" } }
-          ]
+          "key": "list",
+          "type": "string",
+          "label": {
+            "en": "List name (empty: any)",
+            "fr": "Nom de la liste (vide : toutes)",
+            "de": "Listenname (leer: alle)",
+            "es": "Nombre de la lista (vacío: cualquiera)"
+          },
+          "description": {
+            "en": "Exactly as written in Wekan, e.g. Done.",
+            "fr": "Exactement comme dans Wekan, ex. Fait.",
+            "de": "Genau wie in Wekan, z. B. Erledigt.",
+            "es": "Exactamente como en Wekan, p. ej. Hecho."
+          }
         }
       ],
       "variables": [
         {
-          "key": "target",
+          "key": "card",
           "type": "string",
-          "label": { "en": "What moved", "fr": "Ce qui a bougé" }
+          "label": {
+            "en": "Card",
+            "fr": "Carte",
+            "de": "Karte",
+            "es": "Tarjeta"
+          }
+        },
+        {
+          "key": "card_id",
+          "type": "string",
+          "label": {
+            "en": "Card id",
+            "fr": "Identifiant de la carte",
+            "de": "Karten-ID",
+            "es": "Identificador de la tarjeta"
+          }
+        },
+        {
+          "key": "board_name",
+          "type": "string",
+          "label": {
+            "en": "Board",
+            "fr": "Tableau",
+            "de": "Board",
+            "es": "Tablero"
+          }
+        },
+        {
+          "key": "list",
+          "type": "string",
+          "label": {
+            "en": "List",
+            "fr": "Liste",
+            "de": "Liste",
+            "es": "Lista"
+          }
+        },
+        {
+          "key": "due_date",
+          "type": "string",
+          "label": {
+            "en": "Due date (ISO 8601)",
+            "fr": "Échéance (ISO 8601)",
+            "de": "Fälligkeit (ISO 8601)",
+            "es": "Vencimiento (ISO 8601)"
+          }
+        }
+      ]
+    },
+    {
+      "key": "card_moved",
+      "label": {
+        "en": "Wekan card moved",
+        "fr": "Carte Wekan déplacée",
+        "de": "Wekan-Karte verschoben",
+        "es": "Tarjeta de Wekan movida"
+      },
+      "description": {
+        "en": "A card arrived in another list of its board.",
+        "fr": "Une carte est arrivée dans une autre liste de son tableau.",
+        "de": "Eine Karte ist in einer anderen Liste ihres Boards angekommen.",
+        "es": "Una tarjeta llegó a otra lista de su tablero."
+      },
+      "fields": [
+        {
+          "key": "board",
+          "type": "select",
+          "source": "devices",
+          "label": {
+            "en": "Board (empty: any)",
+            "fr": "Tableau (vide : tous)",
+            "de": "Board (leer: alle)",
+            "es": "Tablero (vacío: cualquiera)"
+          }
+        },
+        {
+          "key": "list",
+          "type": "string",
+          "label": {
+            "en": "List name (empty: any)",
+            "fr": "Nom de la liste (vide : toutes)",
+            "de": "Listenname (leer: alle)",
+            "es": "Nombre de la lista (vacío: cualquiera)"
+          },
+          "description": {
+            "en": "Exactly as written in Wekan, e.g. Done.",
+            "fr": "Exactement comme dans Wekan, ex. Fait.",
+            "de": "Genau wie in Wekan, z. B. Erledigt.",
+            "es": "Exactamente como en Wekan, p. ej. Hecho."
+          }
+        }
+      ],
+      "variables": [
+        {
+          "key": "card",
+          "type": "string",
+          "label": {
+            "en": "Card",
+            "fr": "Carte",
+            "de": "Karte",
+            "es": "Tarjeta"
+          }
+        },
+        {
+          "key": "card_id",
+          "type": "string",
+          "label": {
+            "en": "Card id",
+            "fr": "Identifiant de la carte",
+            "de": "Karten-ID",
+            "es": "Identificador de la tarjeta"
+          }
+        },
+        {
+          "key": "board_name",
+          "type": "string",
+          "label": {
+            "en": "Board",
+            "fr": "Tableau",
+            "de": "Board",
+            "es": "Tablero"
+          }
+        },
+        {
+          "key": "list",
+          "type": "string",
+          "label": {
+            "en": "List",
+            "fr": "Liste",
+            "de": "Liste",
+            "es": "Lista"
+          }
+        },
+        {
+          "key": "previous_list",
+          "type": "string",
+          "label": {
+            "en": "Previous list",
+            "fr": "Liste précédente",
+            "de": "Vorherige Liste",
+            "es": "Lista anterior"
+          }
+        },
+        {
+          "key": "due_date",
+          "type": "string",
+          "label": {
+            "en": "Due date (ISO 8601)",
+            "fr": "Échéance (ISO 8601)",
+            "de": "Fälligkeit (ISO 8601)",
+            "es": "Vencimiento (ISO 8601)"
+          }
+        }
+      ]
+    },
+    {
+      "key": "card_due",
+      "label": {
+        "en": "Wekan card due",
+        "fr": "Carte Wekan à échéance",
+        "de": "Wekan-Karte fällig",
+        "es": "Tarjeta de Wekan vencida"
+      },
+      "description": {
+        "en": "An open card reached its due time.",
+        "fr": "Une carte ouverte a atteint son échéance.",
+        "de": "Eine offene Karte hat ihre Fälligkeit erreicht.",
+        "es": "Una tarjeta abierta alcanzó su vencimiento."
+      },
+      "fields": [
+        {
+          "key": "board",
+          "type": "select",
+          "source": "devices",
+          "label": {
+            "en": "Board (empty: any)",
+            "fr": "Tableau (vide : tous)",
+            "de": "Board (leer: alle)",
+            "es": "Tablero (vacío: cualquiera)"
+          }
+        },
+        {
+          "key": "card",
+          "type": "string",
+          "label": {
+            "en": "Card name (empty: any)",
+            "fr": "Nom de la carte (vide : toutes)",
+            "de": "Kartenname (leer: alle)",
+            "es": "Nombre de la tarjeta (vacío: cualquiera)"
+          }
+        }
+      ],
+      "variables": [
+        {
+          "key": "card",
+          "type": "string",
+          "label": {
+            "en": "Card",
+            "fr": "Carte",
+            "de": "Karte",
+            "es": "Tarjeta"
+          }
+        },
+        {
+          "key": "card_id",
+          "type": "string",
+          "label": {
+            "en": "Card id",
+            "fr": "Identifiant de la carte",
+            "de": "Karten-ID",
+            "es": "Identificador de la tarjeta"
+          }
+        },
+        {
+          "key": "board_name",
+          "type": "string",
+          "label": {
+            "en": "Board",
+            "fr": "Tableau",
+            "de": "Board",
+            "es": "Tablero"
+          }
+        },
+        {
+          "key": "list",
+          "type": "string",
+          "label": {
+            "en": "List",
+            "fr": "Liste",
+            "de": "Liste",
+            "es": "Lista"
+          }
+        },
+        {
+          "key": "due_date",
+          "type": "string",
+          "label": {
+            "en": "Due date (ISO 8601)",
+            "fr": "Échéance (ISO 8601)",
+            "de": "Fälligkeit (ISO 8601)",
+            "es": "Vencimiento (ISO 8601)"
+          }
+        }
+      ]
+    },
+    {
+      "key": "card_overdue",
+      "label": {
+        "en": "Wekan card overdue",
+        "fr": "Carte Wekan en retard",
+        "de": "Wekan-Karte überfällig",
+        "es": "Tarjeta de Wekan atrasada"
+      },
+      "description": {
+        "en": "At midnight, a card due that day is still not done.",
+        "fr": "À minuit, une carte due ce jour-là n'est toujours pas faite.",
+        "de": "Um Mitternacht ist eine an diesem Tag fällige Karte noch nicht erledigt.",
+        "es": "A medianoche, una tarjeta que vencía ese día sigue sin hacer."
+      },
+      "fields": [
+        {
+          "key": "board",
+          "type": "select",
+          "source": "devices",
+          "label": {
+            "en": "Board (empty: any)",
+            "fr": "Tableau (vide : tous)",
+            "de": "Board (leer: alle)",
+            "es": "Tablero (vacío: cualquiera)"
+          }
+        },
+        {
+          "key": "card",
+          "type": "string",
+          "label": {
+            "en": "Card name (empty: any)",
+            "fr": "Nom de la carte (vide : toutes)",
+            "de": "Kartenname (leer: alle)",
+            "es": "Nombre de la tarjeta (vacío: cualquiera)"
+          }
+        }
+      ],
+      "variables": [
+        {
+          "key": "card",
+          "type": "string",
+          "label": {
+            "en": "Card",
+            "fr": "Carte",
+            "de": "Karte",
+            "es": "Tarjeta"
+          }
+        },
+        {
+          "key": "card_id",
+          "type": "string",
+          "label": {
+            "en": "Card id",
+            "fr": "Identifiant de la carte",
+            "de": "Karten-ID",
+            "es": "Identificador de la tarjeta"
+          }
+        },
+        {
+          "key": "board_name",
+          "type": "string",
+          "label": {
+            "en": "Board",
+            "fr": "Tableau",
+            "de": "Board",
+            "es": "Tablero"
+          }
+        },
+        {
+          "key": "list",
+          "type": "string",
+          "label": {
+            "en": "List",
+            "fr": "Liste",
+            "de": "Liste",
+            "es": "Lista"
+          }
+        },
+        {
+          "key": "due_date",
+          "type": "string",
+          "label": {
+            "en": "Due date (ISO 8601)",
+            "fr": "Échéance (ISO 8601)",
+            "de": "Fälligkeit (ISO 8601)",
+            "es": "Vencimiento (ISO 8601)"
+          }
         }
       ]
     }
   ],
   "scene_actions": [
     {
-      "key": "identify_device",
-      "label": { "en": "Identify a device", "fr": "Identifier un appareil" },
-      "description": {
-        "en": "Make a device signal itself (the demo light blinks).",
-        "fr": "Fait se signaler un appareil (la lampe de démonstration clignote)."
+      "key": "add_card",
+      "label": {
+        "en": "Add a Wekan card",
+        "fr": "Ajouter une carte Wekan",
+        "de": "Wekan-Karte hinzufügen",
+        "es": "Añadir una tarjeta de Wekan"
       },
-      "timeout_seconds": 15,
+      "description": {
+        "en": "Adds a card to a list, in the first swimlane, as the configured user.",
+        "fr": "Ajoute une carte dans une liste, dans le premier couloir, au nom de l'utilisateur configuré.",
+        "de": "Fügt eine Karte in eine Liste ein, in die erste Swimlane, als konfigurierter Benutzer.",
+        "es": "Añade una tarjeta a una lista, en el primer carril, como el usuario configurado."
+      },
+      "timeout_seconds": 20,
       "fields": [
         {
-          "key": "device",
-          "type": "select",
-          "source": "devices",
-          "label": { "en": "Device", "fr": "Appareil" },
-          "required": true
+          "key": "title",
+          "type": "string",
+          "required": true,
+          "label": {
+            "en": "Title",
+            "fr": "Titre",
+            "de": "Titel",
+            "es": "Título"
+          }
+        },
+        {
+          "key": "board",
+          "type": "string",
+          "label": {
+            "en": "Board name (empty: the first one)",
+            "fr": "Nom du tableau (vide : le premier)",
+            "de": "Board-Name (leer: das erste)",
+            "es": "Nombre del tablero (vacío: el primero)"
+          }
+        },
+        {
+          "key": "list",
+          "type": "string",
+          "label": {
+            "en": "List name (empty: the first one)",
+            "fr": "Nom de la liste (vide : la première)",
+            "de": "Listenname (leer: die erste)",
+            "es": "Nombre de la lista (vacío: la primera)"
+          }
+        },
+        {
+          "key": "due",
+          "type": "string",
+          "label": {
+            "en": "Due date (optional)",
+            "fr": "Échéance (facultative)",
+            "de": "Fälligkeit (optional)",
+            "es": "Vencimiento (opcional)"
+          },
+          "description": {
+            "en": "2026-10-24 18:00, 2026-10-24 (noon), +2h, +3d. Time of Gladys.",
+            "fr": "2026-10-24 18:00, 2026-10-24 (midi), +2h, +3d. Heure de Gladys.",
+            "de": "2026-10-24 18:00, 2026-10-24 (Mittag), +2h, +3d. Uhrzeit von Gladys.",
+            "es": "2026-10-24 18:00, 2026-10-24 (mediodía), +2h, +3d. Hora de Gladys."
+          }
         }
       ],
       "outputs": [
         {
-          "key": "signalled",
-          "type": "boolean",
-          "label": { "en": "Device signalled", "fr": "Appareil signalé" }
+          "key": "card",
+          "type": "string",
+          "label": {
+            "en": "Card",
+            "fr": "Carte",
+            "de": "Karte",
+            "es": "Tarjeta"
+          }
+        },
+        {
+          "key": "card_id",
+          "type": "string",
+          "label": {
+            "en": "Card id",
+            "fr": "Identifiant de la carte",
+            "de": "Karten-ID",
+            "es": "Identificador de la tarjeta"
+          }
+        },
+        {
+          "key": "board_name",
+          "type": "string",
+          "label": {
+            "en": "Board",
+            "fr": "Tableau",
+            "de": "Board",
+            "es": "Tablero"
+          }
+        },
+        {
+          "key": "list",
+          "type": "string",
+          "label": {
+            "en": "List",
+            "fr": "Liste",
+            "de": "Liste",
+            "es": "Lista"
+          }
+        },
+        {
+          "key": "due_date",
+          "type": "string",
+          "label": {
+            "en": "Due date (ISO 8601)",
+            "fr": "Échéance (ISO 8601)",
+            "de": "Fälligkeit (ISO 8601)",
+            "es": "Vencimiento (ISO 8601)"
+          }
+        }
+      ]
+    },
+    {
+      "key": "move_card",
+      "label": {
+        "en": "Move a Wekan card",
+        "fr": "Déplacer une carte Wekan",
+        "de": "Wekan-Karte verschieben",
+        "es": "Mover una tarjeta de Wekan"
+      },
+      "description": {
+        "en": "Moves a card of a followed board to another list.",
+        "fr": "Déplace une carte d'un tableau suivi dans une autre liste.",
+        "de": "Verschiebt eine Karte eines verfolgten Boards in eine andere Liste.",
+        "es": "Mueve una tarjeta de un tablero seguido a otra lista."
+      },
+      "timeout_seconds": 20,
+      "fields": [
+        {
+          "key": "card",
+          "type": "string",
+          "required": true,
+          "label": {
+            "en": "Card name or id",
+            "fr": "Nom ou identifiant de la carte",
+            "de": "Kartenname oder ID",
+            "es": "Nombre o identificador de la tarjeta"
+          },
+          "description": {
+            "en": "The exact name (case and accents ignored).",
+            "fr": "Le nom exact (majuscules et accents ignorés).",
+            "de": "Der genaue Name (Groß-/Kleinschreibung und Akzente egal).",
+            "es": "El nombre exacto (mayúsculas y acentos ignorados)."
+          }
+        },
+        {
+          "key": "list",
+          "type": "string",
+          "required": true,
+          "label": {
+            "en": "Destination list",
+            "fr": "Liste de destination",
+            "de": "Zielliste",
+            "es": "Lista de destino"
+          }
+        },
+        {
+          "key": "board",
+          "type": "string",
+          "label": {
+            "en": "Board name (empty: any followed)",
+            "fr": "Nom du tableau (vide : tous les suivis)",
+            "de": "Board-Name (leer: alle verfolgten)",
+            "es": "Nombre del tablero (vacío: cualquiera seguido)"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "key": "card",
+          "type": "string",
+          "label": {
+            "en": "Card",
+            "fr": "Carte",
+            "de": "Karte",
+            "es": "Tarjeta"
+          }
+        },
+        {
+          "key": "card_id",
+          "type": "string",
+          "label": {
+            "en": "Card id",
+            "fr": "Identifiant de la carte",
+            "de": "Karten-ID",
+            "es": "Identificador de la tarjeta"
+          }
+        },
+        {
+          "key": "board_name",
+          "type": "string",
+          "label": {
+            "en": "Board",
+            "fr": "Tableau",
+            "de": "Board",
+            "es": "Tablero"
+          }
+        },
+        {
+          "key": "list",
+          "type": "string",
+          "label": {
+            "en": "List",
+            "fr": "Liste",
+            "de": "Liste",
+            "es": "Lista"
+          }
+        },
+        {
+          "key": "previous_list",
+          "type": "string",
+          "label": {
+            "en": "Previous list",
+            "fr": "Liste précédente",
+            "de": "Vorherige Liste",
+            "es": "Lista anterior"
+          }
+        }
+      ]
+    },
+    {
+      "key": "read_today",
+      "label": {
+        "en": "Read today's Wekan cards",
+        "fr": "Lire les cartes Wekan du jour",
+        "de": "Heutige Wekan-Karten vorlesen",
+        "es": "Leer las tarjetas de Wekan de hoy"
+      },
+      "description": {
+        "en": "Cards due by tonight as a sentence, for a message or a voice announcement.",
+        "fr": "Les cartes à finir ce soir en une phrase, pour un message ou une annonce vocale.",
+        "de": "Bis heute Abend fällige Karten als Satz, für eine Nachricht oder Sprachansage.",
+        "es": "Las tarjetas para esta noche en una frase, para un mensaje o un anuncio de voz."
+      },
+      "timeout_seconds": 20,
+      "fields": [
+        {
+          "key": "board",
+          "type": "string",
+          "label": {
+            "en": "Board name (empty: all followed)",
+            "fr": "Nom du tableau (vide : tous les suivis)",
+            "de": "Board-Name (leer: alle verfolgten)",
+            "es": "Nombre del tablero (vacío: todos los seguidos)"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "key": "text",
+          "type": "string",
+          "label": {
+            "en": "Sentence",
+            "fr": "Phrase",
+            "de": "Satz",
+            "es": "Frase"
+          }
+        },
+        {
+          "key": "count",
+          "type": "number",
+          "label": {
+            "en": "Cards due by tonight",
+            "fr": "Cartes à finir ce soir",
+            "de": "Bis heute Abend fällige Karten",
+            "es": "Tarjetas para esta noche"
+          }
+        },
+        {
+          "key": "overdue",
+          "type": "number",
+          "label": {
+            "en": "Overdue cards",
+            "fr": "Cartes en retard",
+            "de": "Überfällige Karten",
+            "es": "Tarjetas atrasadas"
+          }
         }
       ]
     }
   ],
   "widgets": [
     {
-      "key": "demo_status",
-      "label": { "en": "Demo status", "fr": "État de la démo" },
-      "description": {
-        "en": "Live temperature and plug power, plug connection and observed location.",
-        "fr": "Température et puissance en direct, connexion de la prise, position observée."
+      "key": "cards_today",
+      "label": {
+        "en": "Today's cards",
+        "fr": "Cartes du jour",
+        "de": "Heutige Karten",
+        "es": "Tarjetas de hoy"
       },
-      "icon": "activity",
-      "action_timeout_seconds": 15
+      "description": {
+        "en": "Cards due today and overdue ones (10 at most), with a button to finish each of the first four.",
+        "fr": "Cartes du jour et en retard (10 au plus), avec un bouton pour terminer chacune des quatre premières.",
+        "de": "Heute fällige und überfällige Karten (max. 10), mit Schaltflächen zum Erledigen der ersten vier.",
+        "es": "Tarjetas de hoy y atrasadas (10 como máximo), con un botón para terminar las cuatro primeras."
+      },
+      "icon": "trello",
+      "action_timeout_seconds": 20,
+      "settings": [
+        {
+          "key": "device",
+          "type": "select",
+          "source": "devices",
+          "required": false,
+          "label": {
+            "en": "Board (empty: all followed)",
+            "fr": "Tableau (vide : tous les suivis)",
+            "de": "Board (leer: alle verfolgten)",
+            "es": "Tablero (vacío: todos los seguidos)"
+          },
+          "description": {
+            "en": "A board device shows only the cards of that board.",
+            "fr": "Un appareil tableau n'affiche que les cartes de ce tableau.",
+            "de": "Ein Board-Gerät zeigt nur die Karten dieses Boards.",
+            "es": "Un dispositivo de tablero muestra solo las tarjetas de ese tablero."
+          }
+        }
+      ]
     }
   ]
 }

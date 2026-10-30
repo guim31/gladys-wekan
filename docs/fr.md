@@ -1,67 +1,201 @@
-# Template de démonstration
+# Wekan
 
-Ceci est la documentation utilisateur de l'intégration. Gladys ré-héberge ce
-fichier et affiche un lien **Documentation** permanent vers lui dans l'écran
-de configuration (dans la langue de l'utilisateur, avec l'anglais en repli) —
-c'est au moment de configurer que l'utilisateur en a le plus besoin. Gardez
-les courtes indications d'accueil dans les blocs `section` du `config_schema`
-du manifest ; mettez ici le pas-à-pas détaillé (captures d'écran, dépannage…).
+Les tableaux kanban de votre [Wekan](https://wekan.fi) dans Gladys : les
+cartes dues aujourd'hui, celles en retard, celles terminées, la prochaine
+échéance et le nombre de cartes de chaque liste d'un tableau. Une scène réagit
+quand une carte est ajoutée, arrive dans une liste (`Fait`, `À vérifier`…) ou
+arrive à échéance, une autre ajoute « acheter du pain » depuis un bouton ou
+déplace une carte depuis un tag NFC, un appui sur le tableau de bord termine
+une carte, et Gladys peut lire les cartes du jour chaque matin.
 
-## Ce que vous obtenez
+> **Vos retours sont les bienvenus.** Cette intégration a été testée contre un
+> vrai serveur Wekan (image Docker `wekanteam/wekan` du 30 octobre 2026, avec
+> MongoDB 7), pas encore à l'usage au quotidien. Si quelque chose ne marche pas
+> comme décrit, dites-le sur le
+> [forum Gladys](https://community.gladysassistant.com) ou dans les
+> [issues](https://github.com/guim31/gladys-wekan/issues).
 
-Six appareils de démonstration apparaissent après l'installation : une
-station météo (vraies données Open-Meteo), un interrupteur, une lampe
-variable, une prise connectée avec mesure de puissance, un détecteur de
-mouvement et une caméra.
+## Ce qu'il vous faut
+
+- Gladys Assistant 5.1.0 ou plus récent.
+- Un **Wekan auto-hébergé**, joignable depuis Gladys, avec son API REST active
+  (`WITH_API=true`, valeur par défaut de l'image Docker et du Snap).
+- L'**identifiant** (ou l'e-mail) et le **mot de passe** d'un utilisateur de
+  Wekan membre des tableaux à suivre. Ce doit être un **compte à mot de
+  passe** : un utilisateur qui se connecte par LDAP, OAuth2 ou une autre
+  authentification unique ne peut pas se connecter depuis Gladys. Un
+  utilisateur dédié, ajouté comme membre des tableaux, est une bonne idée.
+
+L'intégration voit les tableaux que voit cet utilisateur, et agit **en son
+nom** : les cartes ajoutées depuis Gladys l'ont pour auteur. Un membre en
+lecture seule d'un tableau peut le suivre, mais pas en ajouter ni en déplacer
+les cartes.
 
 ## Configuration
 
-1. Ouvrez l'onglet **Configuration** de l'intégration.
-2. Renseignez la **latitude** et la **longitude** que la station météo de
-   démonstration doit observer (Paris par défaut), et choisissez votre unité
-   de température. L'**intervalle de rafraîchissement** règle la fréquence
-   de lecture de la station météo et de la puissance de la prise : toutes
-   les 5 minutes par défaut, toutes les minutes au plus.
-3. Enregistrez : les appareils apparaissent dans l'onglet **Découverte**,
-   prêts à être ajoutés.
+1. Dans Gladys, **Intégrations** → installez **Wekan**.
+2. Dans l'écran **Configuration**, renseignez :
+   - **Adresse** : l'adresse de Wekan comme dans le navigateur, par exemple
+     `http://192.168.1.20:8080`, ou `https://kanban.example.org` derrière un
+     proxy inverse (un préfixe comme `/wekan` est conservé) ;
+   - **Identifiant ou e-mail** et **Mot de passe**.
+3. Options :
+   - **Tableaux suivis** : des noms séparés par des virgules
+     (`Maison, Courses`), ou l'identifiant d'un tableau (dans son adresse,
+     après `/b/`). Vide : tous les tableaux de l'utilisateur, 20 au plus ;
+   - **Listes « terminé »** : les listes dont les cartes comptent comme
+     terminées, par nom, séparées par des virgules. Par défaut
+     `Done, Fait, Terminé, Erledigt, Hecho` ; majuscules et accents ne
+     comptent pas. Vide : seules les dates de fin comptent ;
+   - **Accepter les certificats auto-signés** : pour une adresse en
+     `https://` avec un certificat auto-signé, sur votre propre serveur
+     seulement ;
+   - **Intervalle de rafraîchissement** : 1 à 10 minutes (5 par défaut). Les
+     échéances et minuit sont toujours suivis à l'heure, quel que soit
+     l'intervalle ;
+   - **Langue des noms de fonctionnalités** : les noms donnés aux
+     fonctionnalités à l'ajout d'un appareil (français par défaut), et les
+     textes envoyés aux scènes.
+4. Enregistrez, puis **Tester la connexion** : elle lit Wekan et donne le
+   nombre de cartes ouvertes et de tableaux suivis.
+5. Dans l'onglet **Découverte**, ajoutez les appareils voulus.
 
-Le réglage **Préférer la connexion locale** pilote la prise de
-démonstration : elle affiche en badge le canal réellement utilisé (local ou
-cloud), avec un point orange quand elle fonctionne en mode dégradé (local
-refusé, bascule cloud).
+## Appareils
 
-## Actions
+**Wekan _tableau_** pour chaque tableau suivi, avec ces fonctionnalités :
 
-- **Tester le fournisseur météo** — effectue une requête en direct vers
-  Open-Meteo et affiche la température et l'humidité actuelles sous le
-  bouton.
-- **Identifier un appareil** — choisissez un de vos appareils dans la liste
-  et il se signale (la lampe de démonstration « clignote » dans les logs).
+| Fonctionnalité            | Ce qu'elle indique                                                                                    |
+| ------------------------- | ----------------------------------------------------------------------------------------------------- |
+| `Cartes ouvertes`         | les cartes ni terminées, ni archivées                                                                 |
+| `Cartes dues aujourd'hui` | les cartes ouvertes dont l'échéance tombe aujourd'hui, passée ou non                                  |
+| `Cartes en retard`        | les cartes ouvertes dont l'échéance est passée                                                        |
+| `Cartes terminées`        | les cartes avec une date de fin, ou dans une liste « terminé » (les cartes archivées ne comptent pas) |
+| une par liste             | le nombre de cartes de chacune des cinq premières listes qui ne sont pas des listes « terminé »       |
+| `Prochaine échéance`      | la carte dont l'échéance à venir est la plus proche, et sa date ; `Aucune` s'il n'y en a pas          |
 
-## Scènes
-
-L'intégration ajoute ses propres cartes à l'éditeur de scènes (Gladys 5.1
-ou plus récent), dans la catégorie **Intégrations** :
-
-- **Mouvement détecté** (déclencheur) — lance la scène quand un détecteur
-  de démonstration voit bouger quelque chose. Choisissez éventuellement le
-  détecteur et ce qui a bougé (personne, animal) ; laissés vides, toute
-  détection correspond. Les actions suivantes peuvent lire ce qui a bougé
-  avec `{{triggerEvent.data.target}}`.
-- **Identifier un appareil** (action) — fait se signaler l'appareil choisi.
-  Elle indique si l'appareil a pu se signaler, pour que les actions
-  suivantes puissent en dépendre.
+Une carte est **terminée** quand elle a une **date de fin** (la date « Fin »
+de Wekan), ou quand elle est dans l'une des listes « terminé » de la
+configuration. « Aujourd'hui » est le jour dans le fuseau horaire de Gladys.
+Les cartes de tous les couloirs sont comptées. Les noms des fonctionnalités
+sont fixés à l'ajout de l'appareil : une liste renommée ensuite garde son
+ancien nom dans Gladys. Une nouvelle liste parmi les cinq premières fait
+proposer par Gladys de mettre à jour l'appareil dans l'onglet **Découverte**.
 
 ## Tableau de bord
 
-Ajoutez le widget **État de la démo** à un tableau de bord : il affiche en
-direct la température de la station météo et la puissance de la prise du
-bureau, la connexion utilisée par la prise (en orange si dégradée) et la
-position observée. Son bouton **Identifier la lampe** fait se signaler la
-lampe de démonstration.
+Le widget **Cartes du jour** affiche deux tuiles (aujourd'hui, en retard), la
+liste des cartes à finir ce soir (10 au plus), celles en retard d'abord, avec
+leur heure, leur liste et leur tableau, et un bouton pour chacune des quatre
+plus urgentes : un appui **termine la carte** dans Wekan (sa date de fin
+devient maintenant). Choisissez un appareil tableau dans les réglages du
+widget pour ne voir que ses cartes ; laissez vide pour tous les tableaux
+suivis. Quand rien n'est dû, le widget le dit et donne la prochaine échéance.
+
+Les compteurs peuvent aussi aller sur le tableau de bord comme toute
+fonctionnalité d'appareil.
+
+## Scènes
+
+### Déclencheurs
+
+- **Nouvelle carte Wekan** : une carte est apparue sur un tableau suivi :
+  créée, restaurée depuis l'archive, ou venue d'un autre tableau. Filtres : le
+  tableau (un appareil tableau), le **nom de la liste**, exactement comme dans
+  Wekan (`À faire`).
+- **Carte Wekan déplacée** : une carte est arrivée dans une autre liste de son
+  tableau. Mêmes filtres. Les informations transmises aux actions donnent
+  aussi la liste précédente.
+- **Carte Wekan à échéance** : une carte ouverte a atteint son échéance.
+- **Carte Wekan en retard** : à minuit, une carte due ce jour-là n'est
+  toujours pas terminée. Une fois par carte et par échéance.
+
+Filtres des deux derniers : le tableau, le nom de la carte. Informations
+transmises aux actions : la carte, son identifiant, son tableau, sa liste, son
+échéance.
+
+Une nouvelle carte ou un déplacement est vu à la lecture suivante : dans
+l'intervalle de rafraîchissement. Un tableau tout juste ajouté aux tableaux
+suivis n'apporte aucune « nouvelle carte ». Une carte terminée avant son
+échéance ne déclenche rien, et une échéance déplacée à la main avant la
+lecture précédente non plus. Un redémarrage ne déclenche rien deux fois ; une
+carte ajoutée ou déplacée pendant l'arrêt de l'intégration déclenche à son
+redémarrage, de même qu'une échéance de moins d'une heure.
+
+### Actions
+
+- **Ajouter une carte Wekan** : un titre ; le tableau par son nom (vide : le
+  premier tableau suivi) ; la liste par son nom (vide : sa première liste qui
+  n'est pas une liste « terminé ») ; une **échéance** facultative, à l'heure de
+  Gladys : `2026-10-24 18:00`, `2026-10-24` (midi), ou à partir de maintenant
+  `+30m`, `+2h`, `+3d`. La carte va dans le premier couloir du tableau.
+  Résultats : la carte, son identifiant, son tableau, sa liste, son échéance.
+- **Déplacer une carte Wekan** : la carte par son nom exact (majuscules et
+  accents ignorés) ou son identifiant, la liste de destination par son nom, et
+  le tableau si deux tableaux ont une carte de ce nom. Wekan la place en haut
+  de la liste ; une carte d'une liste « terminé » peut revenir. Résultats : la
+  carte, son identifiant, son tableau, sa liste, la liste précédente.
+- **Lire les cartes Wekan du jour** : les cartes à finir ce soir en une phrase
+  (`3 carte(s) à finir ce soir : …. 2 en retard.`), pour tous les tableaux
+  suivis ou l'un d'eux. Résultats : la phrase, le nombre de cartes à finir ce
+  soir, de cartes en retard. Envoyez la phrase dans un message, ou faites-la
+  dire par Gladys.
+
+Les champs acceptent les variables de scène : `{{triggerEvent.data.card}}`
+déplace la carte qui a déclenché la scène.
+
+### Idées de scènes
+
+- À 7 h 30, **Lire les cartes Wekan du jour**, puis envoyer la phrase sur
+  Telegram.
+- **Nouvelle carte Wekan** dans le tableau `Courses` : l'envoyer à qui fait
+  les courses.
+- **Carte Wekan déplacée** dans la liste `Fait` du tableau `Maison` : envoyer
+  « bravo » à la famille, ou éteindre la lampe de rappel.
+- Quand le lave-linge s'arrête, **Ajouter une carte Wekan**
+  `Étendre le linge` dans `À faire`, échéance `+1h`.
+- Un tag NFC sur les poubelles lance **Déplacer une carte Wekan**
+  `Sortir les poubelles` vers `Fait`.
 
 ## Dépannage
 
-L'intégration journalise tout ce qu'elle fait : consultez les logs de
-l'intégration depuis l'interface Gladys (ou `docker logs` sur l'hôte) avec
-`LOG_LEVEL=debug` pour le détail complet.
+- **« Wekan ne répond pas »** : vérifiez l'adresse et le port depuis la
+  machine de Gladys (l'adresse ouvre Wekan dans un navigateur).
+- **« Identifiant ou mot de passe refusé »** : le mot de passe a changé, ou
+  l'utilisateur se connecte par LDAP ou OAuth2 : prenez un utilisateur à
+  compte par mot de passe.
+- **« Aucune API Wekan à cette adresse »** : l'adresse répond, mais pas avec
+  l'API REST de Wekan : vérifiez le port, le préfixe, et que `WITH_API` ne vaut
+  pas `false` dans les réglages de Wekan.
+- **« L'adresse redirige »** : saisissez l'adresse en `https://`.
+- **« Cet utilisateur n'a pas ce droit »** : l'utilisateur n'est que membre en
+  lecture seule du tableau.
+- **Un tableau manque** : l'utilisateur doit être membre du tableau ; un nom
+  saisi dans **Tableaux suivis** qui ne correspond à aucun tableau est ignoré,
+  et **Tester la connexion** le signale. Les tableaux archivés et les modèles
+  sont écartés. Au-delà de 20 tableaux, listez ceux à suivre.
+- **Une carte finie compte encore comme ouverte** : donnez-lui une date de fin
+  dans Wekan, ou ajoutez sa liste aux **Listes « terminé »**.
+- **« Plusieurs cartes portent ce nom »** : indiquez le tableau, ou
+  l'identifiant de la carte.
+- Logs : `LOG_LEVEL=debug` sur le conteneur montre chaque lecture.
+
+## Limites
+
+- Wekan est lu toutes les 1 à 10 minutes (et à chaque échéance et à minuit) :
+  un changement dans Wekan apparaît dans Gladys dans ce délai. Les webhooks
+  sortants de Wekan ne servent pas.
+- À chaque lecture : la liste des tableaux, puis pour chaque tableau suivi ses
+  listes, ses couloirs et une requête par couloir. La connexion est gardée en
+  mémoire (Wekan la donne pour 90 jours) et refaite seulement quand Wekan la
+  refuse.
+- L'intégration ajoute des cartes, les déplace et les termine (date de fin) ;
+  elle ne les modifie, n'archive, ne supprime ni ne les assigne, et ne lit ni
+  leurs checklists, ni leurs étiquettes, ni leurs commentaires.
+- Les cartes archivées, et celles des listes archivées, sont écartées : l'API
+  de Wekan ne les donne pas.
+- Seules les cinq premières listes d'un tableau qui ne sont pas des listes
+  « terminé » ont un compteur.
+- Gladys ne garde aucune donnée de Wekan en dehors de
+  `/data/wekan-state.json` (l'heure de la dernière lecture et la liste de
+  chaque carte, pour qu'aucun événement ne parte deux fois).
+- Sans lien avec Wekan ni ses auteurs.

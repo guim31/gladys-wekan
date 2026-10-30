@@ -30,6 +30,22 @@ Gladys before reporting a problem.
 
 In scope: the code of this repository and the Docker image it publishes.
 
+What the integration handles:
+
+- the **username and password** of a Wekan user, stored by Gladys in the
+  integration configuration (`secret` field for the password), sent only to
+  the configured Wekan address (`POST /users/login`), and never logged. The
+  login token Wekan answers is kept in memory only;
+- under `/data`, only `wekan-state.json`: the configured address, the time of
+  the last reading, the ids of the followed boards and, for each of their
+  cards, its id and the id of its list (no secret, no card name);
+- network: outgoing HTTP(S) requests to the configured Wekan address only.
+  With "Accept self-signed certificates" ticked, the certificate of that
+  address is not verified.
+
+Prefer a dedicated Wekan user, member of the followed boards only: its
+password opens nothing else.
+
 Out of scope: Gladys Assistant itself (see its
 [security policy](https://github.com/GladysAssistant/Gladys/security/policy)),
-and the third-party services and devices the integration talks to.
+and Wekan itself.

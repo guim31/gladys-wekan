@@ -31,16 +31,22 @@ pushing.
 ## Architecture
 
 ```
-index.js                          SDK wiring only: handlers registered before connect()
-src/devices/index.js              registry of the device blueprints + dispatch helpers
-src/devices/<type>.js             one device type per file (buildDevice, onPoll, onSetValue...)
-src/scenes.js                     scene action handlers (manifest `scene_actions`)
-src/widgets.js                    dashboard widget handlers (manifest `widgets`)
+index.js                          SDK wiring only: src/app.js registers the handlers before connect()
+src/app.js                        every SDK handler -> the hub (also used by the tests)
+src/hub.js                        reading timer, states, scene events, commands, deduplicated logs
+src/devices.js                    board devices: features, names (4 languages), states
+src/wekan/client.js               Wekan REST API client (POST /users/login, Bearer token), errors by kind
+src/wekan/http.js                 node:http/https request (self-signed certificates on request)
+src/wekan/model.js                boards, lists, cards; done/open; local day; counters; lookup by id or name
+src/scenes.js                     scene actions add_card, move_card, read_today
+src/widgets.js                    dashboard widget `cards_today` (manifest `widgets`)
+src/texts.js                      connection, error, report, action and toast texts (4 languages)
 src/config.js                     DEFAULT_CONFIG (mirrors the manifest defaults) + normalization
-src/weather.js                    example driver (Open-Meteo)
+src/store.js                      /data/wekan-state.json (instance, last reading, boards, list of each card)
 gladys-assistant-integration.json manifest: name, config_schema, actions, image...
-docs/en.md, docs/fr.md            user documentation, re-hosted by Gladys (mandatory)
+docs/{en,fr,de,es}.md             user documentation, re-hosted by Gladys (en and fr mandatory)
 test/                             node --test, against the SDK's fake Gladys (integration-sdk/testing)
+                                  and helpers/fakeWekan.js (built from test/fixtures/wekan)
 .github/scripts/release.mjs       release helpers (manifest bump, changelog), tested in test/
 ```
 
@@ -70,8 +76,9 @@ test/                             node --test, against the SDK's fake Gladys (in
   `type: "provider"`: 5.1.0). `test/manifest.test.js` ties the manifest to the
   code (defaults, action, scene and widget handlers): change both sides
   together.
-- **User-facing text** is bilingual (English and French): action messages,
-  manifest texts, and `docs/en.md` / `docs/fr.md`, kept in sync.
+- **User-facing text** exists in English, French, German and Spanish: action
+  messages, widget content, feature names, manifest texts, and
+  `docs/{en,fr,de,es}.md`, kept in sync (`test/i18n.test.js`).
 - **Style.** Prettier formats, ESLint catches mistakes. Comments explain why,
   in English. Tests never touch the network.
 
@@ -214,6 +221,36 @@ code de ce dépôt. Compléter ce fichier quand un nouveau piège est découvert
 - Les filtres de scène ne font qu'égalité et appartenance : un seuil reste le travail d'un capteur.
 - **Les clés de widgets, de déclencheurs et d'actions sont figées une fois publiées.**
 - `gladys_version` `>=5.1.0` dès qu'il y a widgets, déclencheurs ou actions de scène.
+
+## Wekan (propre à ce dépôt)
+
+- **API** vérifiée sur `wekanteam/wekan` (image `latest` du 30/10/2026) + `mongo:7` en Docker le 30/10/2026
+  (`MONGO_URL`, `ROOT_URL`, `PORT=8080`, `WITH_API=true` ; l'inscription par `POST /users/register` est ouverte
+  par défaut, pratique pour les tests). Structure reprise de gladys-planka.
+- **Authentification** : `POST /users/login` `{ username | email, password }` → `{ id, token, tokenExpires }`
+  (90 jours), en `Authorization: Bearer`. Mauvais mot de passe : **401** `{ error: "login-failed" }`. Pas de clé
+  d'API dans Wekan ; un compte LDAP/OAuth2 ne passe pas par cette route. L'`id` sert d'`authorId` des cartes créées.
+- **Ids** : identifiants Meteor de 17 caractères (`HnnkahS2jScztcMoo`), chaînes.
+- **Lire les cartes par couloir** : `GET /api/boards/:b/lists/:l/cards` ne donne **ni `dueAt` ni `endAt`** (titre,
+  description, couloir, `sort`). `GET /api/boards/:b/swimlanes/:s/cards` les donne, avec `listId`. Les deux
+  laissent de côté les cartes archivées et celles des listes archivées ; `GET …/lists` aussi les listes
+  archivées. `GET /api/boards/:b/export` donne tout en une requête mais avec activités et commentaires (taille
+  sans borne) : écarté.
+- Pas de `sort` dans `GET …/lists` : l'ordre de la réponse fait foi.
+- **Terminé** = `endAt` posé, ou carte d'une liste « terminé » (réglage `done_lists`, par nom). `dueComplete`
+  existe sur la carte mais n'est pas renvoyé par la route des couloirs : non utilisé. Le bouton du widget pose
+  `endAt` = maintenant.
+- **Créer** : `POST …/lists/:l/cards` exige `authorId` et `swimlaneId` (premier couloir) ; réponse `{ _id }` seul.
+  L'échéance est posée ensuite par `PUT` (les anciennes versions l'ignorent à la création). **Déplacer** :
+  `PUT …/lists/<liste actuelle>/cards/:c { listId }` ; Wekan met la carte **en haut** (`sort: -1`), un `sort`
+  envoyé est ignoré. Liste d'un autre tableau : **400** « listId does not belong to this board. ».
+- Liste inconnue : `[]` en 200 ; tableau inconnu : 404 `{ error: "Board not found" }`. Hors des routes de l'API
+  (ou `WITH_API=false`), l'interface répond sa page HTML en 200 : « pas Wekan ».
+- `POST /api/boards/:b/archive` n'existe pas (405) ; `GET /api/users/:id/boards` écarte tableaux archivés et
+  modèles (filtre aussi gardé côté client).
+- **Nouvelle carte** (`card_added`) : carte inconnue à la lecture précédente, sur un tableau déjà lu (liste des
+  tableaux gardée dans `/data/wekan-state.json`) ; une carte venue d'un autre tableau est « nouvelle », pas
+  « déplacée ». Un tableau qui entre dans le suivi n'en déclenche aucune.
 
 ## Store
 
