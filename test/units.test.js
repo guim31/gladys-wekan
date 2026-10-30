@@ -163,6 +163,10 @@ test('the client: an unknown route is no Wekan, a 400 is an HTTP error', async (
     throw Object.assign(new Error('self signed'), { code: 'DEPTH_ZERO_SELF_SIGNED_CERT' });
   };
   await assert.rejects(client(tls).boards(), { kind: 'tls' });
+  const html405 = async () => ({ status: 405, headers: {}, body: '<!DOCTYPE html>' });
+  await assert.rejects(client(html405).boards(), { kind: 'not_wekan' }, 'a wrong path prefix');
+  const html502 = async () => ({ status: 502, headers: {}, body: '<html>Bad Gateway</html>' });
+  await assert.rejects(client(html502).boards(), { kind: 'http' });
   const noToken = async () => ({ status: 200, headers: {}, body: '{}' });
   await assert.rejects(client(noToken).boards(), { kind: 'not_wekan' });
 });

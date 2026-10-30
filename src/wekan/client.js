@@ -22,7 +22,8 @@
 //     leaves out the archived cards and those of archived lists.
 //   - An unknown list answers `[]` with a 200, an unknown board a 404.
 //   - Outside the API routes, the web app answers its HTML page with a 200,
-//     any path (also when the API is off, WITH_API=false).
+//     any path (also when the API is off, WITH_API=false); a POST there
+//     answers 405, HTML too.
 //   - A wrong password answers 401 `{ error: "login-failed" }`.
 // -----------------------------------------------------------------------------
 
@@ -117,9 +118,10 @@ export class WekanClient {
       throw new WekanError(ERROR_KINDS.REDIRECT, `HTTP ${status}`, status);
     }
     if (!parsedOk) {
-      // The web app answers its HTML page on paths outside the API.
+      // The web app answers its HTML page on paths outside the API (a 405 to
+      // a POST there, as the login under a wrong path prefix).
       throw new WekanError(
-        status === 200 || status === 404 ? ERROR_KINDS.NOT_WEKAN : ERROR_KINDS.HTTP,
+        status < 500 ? ERROR_KINDS.NOT_WEKAN : ERROR_KINDS.HTTP,
         `HTTP ${status}, not JSON`,
         status,
       );
