@@ -88,6 +88,10 @@ ahora). Elija un dispositivo de tablero en la configuración del widget para ver
 solo sus tarjetas; déjelo vacío para todos los tableros seguidos. Cuando no
 vence nada, el widget lo dice e indica el próximo vencimiento.
 
+En una pantalla compartida, desmarque **Mostrar los botones «terminado»** en
+la configuración del widget: las tarjetas solo se muestran. Los tableros
+llevan el nombre dado en Gladys una vez añadido su dispositivo.
+
 Los contadores también pueden ir al panel como cualquier función de
 dispositivo.
 

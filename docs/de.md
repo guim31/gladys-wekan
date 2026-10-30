@@ -87,6 +87,10 @@ jetzt). Wähle in den Widget-Einstellungen ein Board-Gerät, um nur seine Karten
 zu sehen; leer lassen für alle verfolgten Boards. Ist nichts fällig, sagt das
 Widget es und nennt die nächste Fälligkeit.
 
+Auf einem geteilten Bildschirm wähle **„Erledigt“-Schaltflächen anzeigen** in
+den Widget-Einstellungen ab: Die Karten werden dann nur angezeigt. Die Boards
+tragen den Namen aus Gladys, sobald ihr Gerät hinzugefügt ist.
+
 Die Zähler können auch wie jede Gerätefunktion ins Dashboard.
 
 ## Szenen

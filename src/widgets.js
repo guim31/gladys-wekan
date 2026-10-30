@@ -86,7 +86,7 @@ function cardRow(hub, card, { now, showBoard, language }) {
     : format(hub, card.dueAt, language, { hour: '2-digit', minute: '2-digit' });
   const where = [
     hub.listTitle(card.boardId, card.listId),
-    showBoard ? hub.boardTitle(card.boardId) : '',
+    showBoard ? hub.shownBoardName(card.boardId) : '',
   ]
     .filter(Boolean)
     .join(' · ');
@@ -153,7 +153,7 @@ async function get(hub, { settings, language = 'en' }) {
       .slice(0, MAX_ROWS)
       .map((card) => cardRow(hub, card, { now, showBoard: !board, language })),
   });
-  if (!hub.error) {
+  if (!hub.error && settings?.show_buttons !== false) {
     summary.agenda.slice(0, DONE_ACTIONS.length).forEach((card, index) => {
       components.push({
         type: 'button',

@@ -38,7 +38,7 @@ What the integration handles:
   login token Wekan answers is kept in memory only;
 - under `/data`, only `wekan-state.json`: the configured address, the time of
   the last reading, the ids of the followed boards and, for each of their
-  cards, its id and the id of its list (no secret, no card name);
+  cards, its id and the ids of its board and list (no secret, no card name);
 - network: outgoing HTTP(S) requests to the configured Wekan address only.
   With "Accept self-signed certificates" ticked, the certificate of that
   address is not verified.

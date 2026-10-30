@@ -98,7 +98,7 @@ export class WekanHub {
     this.config = null;
     this.client = null;
     this.reset();
-    this.saved = { scope: null, readAt: 0, lists: {}, boards: [] };
+    this.saved = { scope: null, readAt: 0, lists: {}, boards: [], sent: [] };
     this.connection = null;
     this.devicesSignature = null;
     this.widgetSignature = null;
@@ -157,6 +157,7 @@ export class WekanHub {
       readAt: Number.isFinite(saved.readAt) ? saved.readAt : 0,
       lists: saved.lists && typeof saved.lists === 'object' ? saved.lists : {},
       boards: Array.isArray(saved.boards) ? saved.boards : [],
+      sent: Array.isArray(saved.sent) ? saved.sent : [],
     };
     await this.reconfigure(config);
   }
@@ -401,6 +402,13 @@ export class WekanHub {
     return this.followed.find((board) => board.id === boardId)?.name ?? `#${boardId}`;
   }
 
+  /** The name of the board in Gladys once its device is added, else in Wekan (the widget). */
+  shownBoardName(boardId) {
+    const externalId = boardIds(this.gladys, boardId).device;
+    const device = (this.gladys.devices ?? []).find((item) => item.external_id === externalId);
+    return device?.name || this.boardTitle(boardId);
+  }
+
   listTitle(boardId, listId) {
     const board = this.followed.find((item) => item.id === boardId);
     return board?.lists.find((list) => list.id === listId)?.name ?? '';
@@ -550,38 +558,47 @@ export class WekanHub {
    *     (created, restored from the archive, or brought from another board);
    *     a board just followed brings no event;
    *   - a card whose list changed since then;
-   *   - a due time crossed, the end of a due day crossed. A due date moved
-   *     into the past by hand is not a crossing: nothing fires for it.
+   *   - a due time crossed, the end of a due day crossed, since the previous
+   *     reading (at most `maxLateMs` ago). A due date set by hand to a moment
+   *     before the previous reading fires nothing; to a moment since then,
+   *     it fires like any other.
    */
   async fireEvents(now) {
     const scope = this.config.url;
-    const lists = Object.fromEntries(this.cards.map((card) => [card.id, card.listId]));
+    // Each card's place, `board:list` (Wekan ids hold no colon): a list
+    // archived meanwhile still tells a move from a card come from elsewhere.
+    const lists = Object.fromEntries(
+      this.cards.map((card) => [card.id, `${card.boardId}:${card.listId}`]),
+    );
     const boards = this.followed.map((board) => board.id);
     if (this.saved.scope !== scope || this.saved.readAt === 0) {
       // First reading of this instance: what already passed is not news.
-      this.saved = { scope, readAt: now, lists, boards };
+      this.saved = { scope, readAt: now, lists, boards, sent: [] };
       this.store.save(this.saved);
       return;
     }
     const known = this.saved.lists;
     const knownBoards = new Set(this.saved.boards);
+    // Due events already sent at the moment where Gladys refused one.
+    const sent = new Set(this.saved.sent);
+    const eventId = (event) => `${event.key}:${event.card.id}:${event.at}`;
     const from = Math.max(this.saved.readAt, now - this.timings.maxLateMs);
     const crossed = (moment) => moment !== null && moment > from && moment <= now;
     const events = [];
     for (const card of this.cards) {
       const base = this.eventData(card);
-      const before = known[card.id];
-      // A list of another board: the card changed board, which is no move.
-      const sameBoard = before !== undefined && this.listTitle(card.boardId, before) !== '';
-      if (!sameBoard && before !== card.listId && knownBoards.has(card.boardId)) {
-        events.push({ at: now, key: TRIGGERS.ADDED, card, data: base });
-      }
-      if (sameBoard && before !== card.listId) {
+      const [beforeBoard, beforeList] = String(known[card.id] ?? ':').split(':');
+      // Unknown, or on another board then: a new card for this board, no move.
+      if (beforeBoard !== card.boardId) {
+        if (knownBoards.has(card.boardId)) {
+          events.push({ at: now, key: TRIGGERS.ADDED, card, data: base });
+        }
+      } else if (beforeList !== card.listId) {
         events.push({
           at: now,
           key: TRIGGERS.MOVED,
           card,
-          data: { ...base, previous_list: this.listTitle(card.boardId, before) },
+          data: { ...base, previous_list: this.listTitle(card.boardId, beforeList) },
         });
       }
       const due = pendingDue(card);
@@ -611,13 +628,30 @@ export class WekanHub {
         }
       }
     }
+    let sentNow = [];
     for (const event of events.filter((item) => !instant(item.key))) {
+      if (sent.has(eventId(event))) {
+        sentNow.push(eventId(event));
+        continue;
+      }
       if (!(await this.fire(event.key, event.data))) {
         readAt = event.at - 1;
+        // Those of the same moment already sent are not sent again.
+        sentNow = sentNow.filter((id) => id.endsWith(`:${event.at}`));
         break;
       }
+      sentNow.push(eventId(event));
     }
-    this.saved = { scope, readAt: Math.max(readAt, this.saved.readAt), lists, boards };
+    if (readAt === now) {
+      sentNow = [];
+    }
+    this.saved = {
+      scope,
+      readAt: Math.max(readAt, this.saved.readAt),
+      lists,
+      boards,
+      sent: sentNow,
+    };
     this.store.save(this.saved);
   }
 
@@ -845,9 +879,10 @@ export class WekanHub {
   /** Finish a card: its end date is now, as Wekan's "End" date (the widget buttons). */
   async completeCard(cardId) {
     const client = this.requireClient();
+    // Its list now: Wekan answers 404 to a card addressed by a list it left.
+    await this.readNow();
     const card = this.cards.find((item) => item.id === cardId);
     if (!card || !card.open) {
-      this.poll().catch(() => {});
       throw this.fail('alreadyDone');
     }
     try {

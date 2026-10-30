@@ -20,7 +20,7 @@ the notes of the version's GitHub Release.
 - Login with the username (or e-mail) and password of a Wekan user.
 - Dashboard widget "Today's cards": the cards due by tonight (10 at most),
   overdue first, with a button to finish each of the four most urgent; for
-  every board or one.
+  every board or one, and a setting to hide the buttons on a shared screen.
 - Scene triggers "New Wekan card" and "Wekan card moved" (board and list
   filters), "Wekan card due" and "Wekan card overdue" (at midnight), with the
   card, its board, its list and its due date as variables.

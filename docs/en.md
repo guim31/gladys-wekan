@@ -83,6 +83,10 @@ device in the widget settings to see only its cards; leave it empty for every
 followed board. When nothing is due, the widget says so and gives the next
 due date.
 
+On a shared screen, untick **Show the "done" buttons** in the widget settings:
+the cards are then only shown. The boards are named as in Gladys once their
+device is added.
+
 The counters can also go on the dashboard as any device feature.
 
 ## Scenes

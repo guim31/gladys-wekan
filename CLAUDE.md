@@ -251,6 +251,11 @@ code de ce dépôt. Compléter ce fichier quand un nouveau piège est découvert
 - **Nouvelle carte** (`card_added`) : carte inconnue à la lecture précédente, sur un tableau déjà lu (liste des
   tableaux gardée dans `/data/wekan-state.json`) ; une carte venue d'un autre tableau est « nouvelle », pas
   « déplacée ». Un tableau qui entre dans le suivi n'en déclenche aucune.
+- État `/data/wekan-state.json` : place de chaque carte en `tableau:liste` (une liste archivée entre deux
+  lectures ne change pas un déplacement en nouvelle carte) et `sent`, les événements d'échéance déjà envoyés au
+  moment où Gladys en a refusé un (pas de doublon pour deux cartes de même échéance).
+- `PUT …/lists/:l/cards/:c` avec une liste que la carte a quittée : **404** « Card not found » (vérifié) : le
+  bouton du widget relit Wekan avant d'écrire.
 
 ## Store
 

@@ -522,3 +522,36 @@ test('two boards of the same name: both followed, distinct device names', async 
   assert.equal(names.length, 2);
   assert.equal(new Set(names).size, 2, names.join(' / '));
 });
+
+test('a refused due event does not send again those of the same moment', async (t) => {
+  const clock = createClock();
+  const w = await world(t, { clock });
+  w.server.card('Tondre la pelouse').dueAt = '2026-10-31T08:00:00.000Z'; // same as the robinet
+  await w.hub.poll();
+  const publish = w.gladys.publishSceneEvent.bind(w.gladys);
+  let refuse = true;
+  t.mock.method(w.gladys, 'publishSceneEvent', async (key, data) => {
+    if (refuse && data.card === 'Tondre la pelouse') {
+      throw new Error('Gladys is restarting');
+    }
+    return publish(key, data);
+  });
+  clock.time = at(31, 8, 0, 30);
+  await w.hub.poll();
+  refuse = false;
+  clock.advance(60_000);
+  await w.hub.poll();
+  assert.deepEqual(
+    keys(w).filter((key) => key.startsWith('card_due')),
+    ['card_due:Réparer le robinet', 'card_due:Tondre la pelouse'],
+  );
+});
+
+test('a move stays a move when the list it left is archived meanwhile', async (t) => {
+  const w = await world(t);
+  w.server.move('Ranger le garage', LISTS.TODO);
+  const board = w.server.boards.get(BOARD_ID);
+  board.lists = board.lists.filter((list) => list._id !== LISTS.BLOCKED);
+  await w.hub.poll();
+  assert.deepEqual(keys(w), ['card_moved:Ranger le garage']);
+});

@@ -11,6 +11,7 @@ import {
   BASE_CONFIG,
   BOARD_ID,
   COURSES_ID,
+  LISTS,
   boardId,
   createClock,
   createWorld,
@@ -122,4 +123,22 @@ test('degraded states: not configured, unknown board, Wekan down', async (t) => 
   await down.gladys.connect();
   await down.app.ready;
   assert.match((await content(down)).components[0].text, /does not answer/);
+});
+
+test('the "done" button finds a card moved in Wekan since the last reading', async (t) => {
+  const w = await world(t);
+  w.server.move('Payer la cantine', LISTS.BLOCKED);
+  const id = w.server.card('Payer la cantine')._id;
+  const ack = await w.fake.widgetAction('cards_today', 'done_2', { id }, { settings: {} });
+  assert.equal(ack.success, true, ack.error);
+  assert.equal(w.server.card('Payer la cantine').endAt, '2026-10-30T01:55:00.000Z');
+});
+
+test('the buttons can be hidden; the rows show the board names given in Gladys', async (t) => {
+  const w = await world(t);
+  const [device] = w.fake.discoveredDevices;
+  await w.fake.deviceCreated({ ...device, name: 'Maison' });
+  const data = await content(w, { show_buttons: false });
+  assert.deepEqual(ofType(data, 'button'), []);
+  assert.equal(ofType(data, 'status')[0].items[0].value, 'Overdue · À faire · Maison');
 });

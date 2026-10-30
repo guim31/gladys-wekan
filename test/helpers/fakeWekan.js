@@ -200,7 +200,8 @@ export class FakeWekan {
       return json(200, { _id: created._id });
     }
     if (method === 'PUT' && card) {
-      const target = board.cards.find((item) => item._id === card[3]);
+      // The real server looks the card up in the list of the path too.
+      const target = board.cards.find((item) => item._id === card[3] && item.listId === card[2]);
       if (!target) {
         return json(404, { error: 'Card not found' });
       }

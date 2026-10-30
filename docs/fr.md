@@ -91,6 +91,10 @@ devient maintenant). Choisissez un appareil tableau dans les réglages du
 widget pour ne voir que ses cartes ; laissez vide pour tous les tableaux
 suivis. Quand rien n'est dû, le widget le dit et donne la prochaine échéance.
 
+Sur un écran partagé, décochez **Afficher les boutons « terminé »** dans les
+réglages du widget : les cartes sont alors seulement affichées. Les tableaux
+portent le nom donné dans Gladys une fois leur appareil ajouté.
+
 Les compteurs peuvent aussi aller sur le tableau de bord comme toute
 fonctionnalité d'appareil.
 

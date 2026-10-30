@@ -1002,6 +1002,24 @@
             "de": "Ein Board-Gerät zeigt nur die Karten dieses Boards.",
             "es": "Un dispositivo de tablero muestra solo las tarjetas de ese tablero."
           }
+        },
+        {
+          "key": "show_buttons",
+          "type": "boolean",
+          "required": false,
+          "default": true,
+          "label": {
+            "en": "Show the \"done\" buttons",
+            "fr": "Afficher les boutons « terminé »",
+            "de": "„Erledigt“-Schaltflächen anzeigen",
+            "es": "Mostrar los botones «terminado»"
+          },
+          "description": {
+            "en": "Untick on a shared screen: the cards are then only shown.",
+            "fr": "À décocher sur un écran partagé : les cartes sont alors seulement affichées.",
+            "de": "Auf einem geteilten Bildschirm abwählen: Die Karten werden dann nur angezeigt.",
+            "es": "Desmárquelo en una pantalla compartida: las tarjetas solo se muestran."
+          }
         }
       ]
     }
